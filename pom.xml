@@ -22,8 +22,8 @@ under the License.
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.tado.custom-spark</groupId>
-	<artifactId>deps</artifactId>
-	<version>0.0</version>
+	<artifactId>tado-custom-spark</artifactId>
+	<version>2024.01.18</version>
 	<packaging>jar</packaging>
 
 	<name>tado Custom Spark Depencencies</name>
@@ -70,5 +70,31 @@ under the License.
 	</dependencies>
 
 	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.4.1</version>
+				<executions>
+					<!-- Run shade goal on package phase -->
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<relocations>
+								<relocation>
+									<pattern>com.fasterxml.jackson</pattern>
+									<shadedPattern>com.tado.data.fasterxml.jackson</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
+
 </project>
