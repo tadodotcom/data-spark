@@ -28,10 +28,8 @@ do
 
   major_version=$(echo $version | cut -d. -f1 -f2)
 
-  mvn clean dependency:copy-dependencies \
-	  -Dspark.full_version=$version \
-	  -Dspark.version=$major_version \
-	  -DoutputDirectory=$SPARK_BASE_PATH/assembly/target/scala-2.12/jars
+  mvn clean package
+  cp target/tado-custom-spark* $SPARK_BASE_PATH/assembly/target/scala-2.12/jars/
 
   cd $SPARK_BASE_PATH/python
 
