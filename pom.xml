@@ -23,7 +23,7 @@ under the License.
 
 	<groupId>com.tado.custom-spark</groupId>
 	<artifactId>tado-custom-spark</artifactId>
-	<version>2024.01.18</version>
+	<version>2024.01.31</version>
 	<packaging>jar</packaging>
 
 	<name>tado Custom Spark Depencencies</name>
@@ -33,7 +33,6 @@ under the License.
 		<spark.version>3.4</spark.version>
 		<scala.binary.version>2.12</scala.binary.version>
 		<iceberg.version>1.4.3</iceberg.version>
-		<awssdk.version>2.20.118</awssdk.version>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
@@ -48,12 +47,16 @@ under the License.
 					<artifactId>httpclient</artifactId>
 				</exclusion>
 				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>com.google.guava</groupId>
 					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.amazonaws</groupId>
+					<artifactId>aws-java-sdk-glue</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.amazonaws</groupId>
+					<artifactId>aws-java-sdk-core</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -74,7 +77,7 @@ under the License.
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.4.1</version>
+				<version>3.5.1</version>
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
