@@ -28,7 +28,9 @@ do
 
   major_version=$(echo $version | cut -d. -f1 -f2)
 
-  mvn clean package
+  mvn clean package \
+       -Dspark.full_version=$version \
+       -Dspark.version=$major_version
   cp target/tado-custom-spark* $SPARK_BASE_PATH/assembly/target/scala-2.12/jars/
 
   cd $SPARK_BASE_PATH/python
