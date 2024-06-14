@@ -6,7 +6,7 @@ REPO_PATH=${PWD}
 
 export JAVA_HOME=$(/usr/libexec/java_home -v 11)
 
-VERSIONS=( '3.3.0' '3.4.1' )
+VERSIONS=( '3.3.0' '3.5.1' )
 
 for version in "${VERSIONS[@]}"
 do

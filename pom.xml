@@ -32,7 +32,7 @@ under the License.
 		<spark.full_version>3.4.1</spark.full_version>
 		<spark.version>3.4</spark.version>
 		<scala.binary.version>2.12</scala.binary.version>
-		<iceberg.version>1.4.3</iceberg.version>
+		<iceberg.version>1.5.2</iceberg.version>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
