@@ -4,7 +4,7 @@ Provides a custom Spark distribution to be able to easily use the Glue Catalog (
 
 Supports the current versions:
 
-- 3.4.1 => EMR 6.13
+- 3.5.3 => EMR 7.x (3.5.3 is not yet in use, 3.5.1 a of 7.3.0)
 - 3.3.0 => Glue 4.0
 
 Note, the `pom.xml` file includes all the dependencies to be added to the custom version of spark. If that changes, then the artifacts will need to be rebuilt.
