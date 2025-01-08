@@ -4,9 +4,9 @@ set -e
 SPARK_BASE_PATH=$1
 REPO_PATH=${PWD}
 
-export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 
-VERSIONS=( '3.3.0' '3.5.3' )
+VERSIONS=( '3.5.4' )
 
 for version in "${VERSIONS[@]}"
 do
