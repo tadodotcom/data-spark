@@ -32,7 +32,7 @@ under the License.
 		<spark.full_version>3.5.4</spark.full_version>
 		<spark.version>3.5</spark.version>
 		<scala.binary.version>2.12</scala.binary.version>
-		<iceberg.version>1.7.1</iceberg.version>
+		<iceberg.version>1.9.0</iceberg.version>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
@@ -77,7 +77,7 @@ under the License.
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.5.1</version>
+				<version>3.6.0</version>
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
