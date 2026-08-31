@@ -46,6 +46,24 @@ Note, the `pom.xml` file includes all the dependencies to be added to the custom
     pip install pyspark-3.4.1.tar.gz
     ```
 
+## Smoke testing
+
+Before releasing a new build, verify Glue Catalog access actually works, for both
+Iceberg and plain (non-Iceberg) tables. This is a manual check, not run in CI:
+
+```
+uv venv --python 3.13.14
+uv pip install pyspark-4.1.1.tar.gz
+uv run python smoke-test.py \
+    --hive-database tado_data_netsuite_etl_production --hive-table customer_ids \
+    --iceberg-database telemetry_production_v3 --iceberg-table raw_enriched
+```
+
+Point `--hive-database`/`--hive-table` at a plain (non-Iceberg) table and
+`--iceberg-database`/`--iceberg-table` at an Iceberg table, both already
+present in the Glue Data Catalog. Either pair can be omitted to skip that
+check. Requires valid AWS credentials for the target account/region.
+
 ## Releasing versions
 
 To release a new version of the custom artifact, simply create a new release, and add the files to it. For example:
