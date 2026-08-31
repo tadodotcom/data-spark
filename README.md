@@ -30,6 +30,12 @@ Note, the `pom.xml` file includes all the dependencies to be added to the custom
     For more details, see the [Spark documentation](https://spark.apache.org/docs/latest/building-spark.html).
     This takes a while to run.
 
+    As part of this, `strip-aws-sdk-bundle.py` trims `software.amazon.awssdk:bundle`
+    (pulled in by `-Phadoop-cloud` for S3A support) down from ~640MB to ~20MB by
+    removing the ~395 AWS service clients we never use, keeping only `s3`, `sts`,
+    `kms`, `sso`, and `ssooidc`. Iceberg's `GlueCatalog` is unaffected - it ships
+    its own separately shaded copy of the AWS SDK.
+
 1. Once this is complete, you should see two new tar.gz files in the directory:
 
     ```
