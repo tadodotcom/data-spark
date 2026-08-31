@@ -40,6 +40,11 @@ do
       -DskipTests \
       -Dmaven.test.skip=true
 
+  # -Phadoop-cloud pulls in software.amazon.awssdk:bundle, which packages
+  # every AWS service (400+, ~640MB) even though S3A only ever needs a
+  # handful of them. Strip it down before packaging the pip distribution.
+  python3 $REPO_PATH/strip-aws-sdk-bundle.py assembly/target/scala-2.13/jars
+
   cd $REPO_PATH
 
   major_version=$(echo $version | cut -d. -f1 -f2)
