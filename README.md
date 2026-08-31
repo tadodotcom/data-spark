@@ -4,6 +4,7 @@ Provides a custom Spark distribution to be able to easily use the Glue Catalog (
 
 Supports the current versions:
 
+- 4.1.1 => Glue 6.0
 - 3.5.3 => EMR 7.x (3.5.3 is not yet in use, 3.5.1 a of 7.3.0)
 - 3.3.0 => Glue 4.0
 
@@ -15,6 +16,8 @@ Note, the `pom.xml` file includes all the dependencies to be added to the custom
    [here](https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore).
    The only difference is that one should checkout the `rel/release-2.3.9` branch.
    This installation process includes building a custom version of hive, during which the jars will be installed locally (under version `2.3.9`). Note, I had trouble with the compiling tests, so added `-Dmaven.test.skip=true` to the build command to not compile those.
+
+1. For Spark 4.x (Glue 6.0+): Spark bundles Hive 2.3.10, which dropped the `HiveMetaStoreClientFactory`/`SessionHiveMetaStoreClientFactory` hook that `hive.metastore.client.factory.class` depends on (present in Hive 2.3.9, used by Spark 3.5.x). Without it, the Glue Catalog config is silently ignored. `vendor/hive-2.3.10-glue-patch/` contains Hive 2.3.10 rebuilt with the corrected `HIVE-12679` patch from [this PR](https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore/pull/84), which reinstates it. `generate-spark-distro.sh` installs these into the local Maven repo automatically before building.
 
 1. Once this is completed, you need to also build Spark. First step is to clone the [repository](https://github.com/apache/spark).
 
@@ -42,6 +45,24 @@ Note, the `pom.xml` file includes all the dependencies to be added to the custom
     ```
     pip install pyspark-3.4.1.tar.gz
     ```
+
+## Smoke testing
+
+Before releasing a new build, verify Glue Catalog access actually works, for both
+Iceberg and plain (non-Iceberg) tables. This is a manual check, not run in CI:
+
+```
+uv venv --python 3.13.14
+uv pip install pyspark-4.1.1.tar.gz
+uv run python smoke-test.py \
+    --hive-database tado_data_netsuite_etl_production --hive-table customer_ids \
+    --iceberg-database telemetry_production_v3 --iceberg-table raw_enriched
+```
+
+Point `--hive-database`/`--hive-table` at a plain (non-Iceberg) table and
+`--iceberg-database`/`--iceberg-table` at an Iceberg table, both already
+present in the Glue Data Catalog. Either pair can be omitted to skip that
+check. Requires valid AWS credentials for the target account/region.
 
 ## Releasing versions
 

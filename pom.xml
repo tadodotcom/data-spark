@@ -29,10 +29,10 @@ under the License.
 	<name>tado Custom Spark Depencencies</name>
 
 	<properties>
-		<spark.full_version>3.5.4</spark.full_version>
-		<spark.version>3.5</spark.version>
-		<scala.binary.version>2.12</scala.binary.version>
-		<iceberg.version>1.9.0</iceberg.version>
+		<spark.full_version>4.1.1</spark.full_version>
+		<spark.version>4.1</spark.version>
+		<scala.binary.version>2.13</scala.binary.version>
+		<iceberg.version>1.11.0</iceberg.version>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
@@ -49,14 +49,6 @@ under the License.
 				<exclusion>
 					<groupId>com.google.guava</groupId>
 					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.amazonaws</groupId>
-					<artifactId>aws-java-sdk-glue</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.amazonaws</groupId>
-					<artifactId>aws-java-sdk-core</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -91,6 +83,13 @@ under the License.
 								<relocation>
 									<pattern>com.fasterxml.jackson</pattern>
 									<shadedPattern>com.tado.data.fasterxml.jackson</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>com.amazonaws</pattern>
+									<shadedPattern>com.tado.data.amazonaws</shadedPattern>
+									<excludes>
+										<exclude>com.amazonaws.glue.**</exclude>
+									</excludes>
 								</relocation>
 							</relocations>
 						</configuration>
