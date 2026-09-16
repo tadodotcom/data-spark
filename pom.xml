@@ -79,6 +79,15 @@ under the License.
 						</goals>
 						<configuration>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<!-- Relocating software.amazon.awssdk (below) moves classes like
+							     software.amazon.awssdk.http.apache.ApacheSdkHttpService, which
+							     ServiceLoader-based SPI files under META-INF/services name and
+							     reference explicitly. Without ServicesResourceTransformer, shade
+							     only rewrites classes, leaving the SPI file's name and its listed
+							     implementation both pointing at the old, now-nonexistent package. -->
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+							</transformers>
 							<relocations>
 								<relocation>
 									<pattern>com.fasterxml.jackson</pattern>
@@ -90,6 +99,10 @@ under the License.
 									<excludes>
 										<exclude>com.amazonaws.glue.**</exclude>
 									</excludes>
+								</relocation>
+								<relocation>
+									<pattern>software.amazon.awssdk</pattern>
+									<shadedPattern>com.tado.data.awssdk</shadedPattern>
 								</relocation>
 							</relocations>
 						</configuration>

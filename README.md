@@ -33,8 +33,12 @@ Note, the `pom.xml` file includes all the dependencies to be added to the custom
     As part of this, `strip-aws-sdk-bundle.py` trims `software.amazon.awssdk:bundle`
     (pulled in by `-Phadoop-cloud` for S3A support) down from ~640MB to ~20MB by
     removing the ~395 AWS service clients we never use, keeping only `s3`, `sts`,
-    `kms`, `sso`, and `ssooidc`. Iceberg's `GlueCatalog` is unaffected - it ships
-    its own separately shaded copy of the AWS SDK.
+    `kms`, `sso`, and `ssooidc`. Iceberg's `GlueCatalog` (via `iceberg-aws-bundle`)
+    is *not* separately shaded - it ships plain `software.amazon.awssdk.*`
+    classes, same as Hadoop's bundle. `pom.xml`'s own shade step relocates
+    `software.amazon.awssdk` to `com.tado.data.awssdk` for everything in
+    `tado-custom-spark`, so the two never collide regardless of which AWS
+    SDK version either side is pinned to.
 
 1. Once this is complete, you should see two new tar.gz files in the directory:
 
