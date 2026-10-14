@@ -1,0 +1,115 @@
+# Rebuilds tado-custom-spark-iceberg.jar and swaps it into the pyspark sdist of
+# the most recent release for the same Spark version - neither Spark nor the
+# Glue Data Catalog client jar (built only by hand, see README) needs
+# rebuilding for an Iceberg bump.
+# Pull requests only build and smoke test; pushes to main that change the jar
+# also publish a new release.
+name: Build and release
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - "pom.xml"
+      - "iceberg/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Read versions from pom.xml
+        id: versions
+        run: |
+          spark=$(mvn -q -N help:evaluate -DforceStdout \
+            -Dexpression=spark.full_version)
+          iceberg=$(mvn -q -pl iceberg help:evaluate -DforceStdout \
+            -Dexpression=iceberg.version)
+          echo "spark=$spark" >> "$GITHUB_OUTPUT"
+          echo "iceberg=$iceberg" >> "$GITHUB_OUTPUT"
+          echo "Spark $spark, Iceberg $iceberg"
+
+      - name: Build tado-custom-spark-iceberg jar
+        run: mvn -B -pl iceberg package
+
+      - name: Download base pyspark sdist
+        id: base
+        env:
+          ASSET: pyspark-${{ steps.versions.outputs.spark }}.tar.gz
+        run: |
+          tag=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq \
+            '[.[] | select(.draft | not)
+                  | select(any(.assets[]; .name == env.ASSET))][0].tag_name
+             // empty')
+          if [ -z "$tag" ]; then
+            echo "::error::No release has $ASSET; build it once by hand" \
+                 "with generate-spark-distro.sh (see README)"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          mkdir base
+          gh release download "$tag" -p "$ASSET" -D base
+          echo "Base: $tag"
+
+      - name: Swap in the new jar
+        run: |
+          mkdir dist
+          ./replace-jars.py \
+            base/pyspark-${{ steps.versions.outputs.spark }}.tar.gz \
+            dist/pyspark-${{ steps.versions.outputs.spark }}.tar.gz \
+            --remove 'tado-custom-spark-iceberg*.jar' \
+            iceberg/target/tado-custom-spark-iceberg.jar
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Smoke test
+        run: |
+          uv venv
+          uv pip install dist/pyspark-*.tar.gz
+          .venv/bin/python ci-smoke-test.py \
+            --expected-iceberg-version ${{ steps.versions.outputs.iceberg }}
+
+      - name: Publish release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          SPARK: ${{ steps.versions.outputs.spark }}
+          ICEBERG: ${{ steps.versions.outputs.iceberg }}
+          BASE: ${{ steps.base.outputs.tag }}
+        run: |
+          tag="release/$(date -u +%Y.%m.%d)-iceberg-$ICEBERG"
+          sha=$(cd dist && sha256sum pyspark-*.tar.gz)
+          cat > notes.md <<NOTES
+          Spark $SPARK, Iceberg $ICEBERG.
+
+          Built by CI from $GITHUB_SHA: tado-custom-spark-iceberg.jar
+          swapped into the sdist from $BASE.
+
+          sha256sum:
+          \`\`\`
+          $sha
+          \`\`\`
+          NOTES
+          gh release create "$tag" dist/pyspark-*.tar.gz \
+            --target "$GITHUB_SHA" \
+            --title "Spark $SPARK, Iceberg $ICEBERG" \
+            --notes-file notes.md
+          echo "Released $tag" >> "$GITHUB_STEP_SUMMARY"

@@ -8,9 +8,50 @@ Supports the current versions:
 - 3.5.3 => EMR 7.x (3.5.3 is not yet in use, 3.5.1 a of 7.3.0)
 - 3.3.0 => Glue 4.0
 
-Note, the `pom.xml` file includes all the dependencies to be added to the custom version of spark. If that changes, then the artifacts will need to be rebuilt.
+`pom.xml` builds two jars, both added to the custom version of Spark:
+
+- `glue/` → `tado-custom-spark-glue.jar`: the Glue Data Catalog Hive client.
+  Its artifacts aren't published anywhere (see "Building Spark" below), so it
+  is only ever built by hand, alongside Spark itself.
+- `iceberg/` → `tado-custom-spark-iceberg.jar`: Iceberg's Spark runtime and
+  AWS bundle, all from Maven Central.
+
+Both share the same shading/relocation configuration (in `pom.xml`), and leave
+commons-codec and commons-logging (which both would otherwise bundle, at
+different versions) to the copies Spark already ships.
+
+## Upgrading Iceberg (automated)
+
+Only `tado-custom-spark-iceberg.jar` depends on the Iceberg version; neither
+Spark nor the Glue client jar does. An Iceberg upgrade therefore never rebuilds
+either:
+
+1. Dependabot opens a PR bumping `iceberg.version` in `iceberg/pom.xml`.
+2. `.github/workflows/build-and-release.yml` builds the jar
+   (`mvn -pl iceberg package`), swaps it into the `pyspark-<spark>.tar.gz` of
+   the most recent release for the same Spark version (`replace-jars.py`), and
+   runs `ci-smoke-test.py` against it: the bundled Iceberg version, an Iceberg
+   create/insert/merge/read on a local catalog, and loading the Glue and
+   commons classes. It does not talk to AWS; `smoke-test.py` (below) is still
+   the manual check against the real Glue Data Catalog.
+3. Merging to `main` publishes a release tagged
+   `release/<date>-iceberg-<version>` with the sha256 in its notes.
+
+The same swap works by hand:
+
+```
+mvn -pl iceberg package
+./replace-jars.py /path/to/previous/pyspark-4.1.1.tar.gz pyspark-4.1.1.tar.gz \
+    --remove 'tado-custom-spark-iceberg*.jar' \
+    iceberg/target/tado-custom-spark-iceberg.jar
+```
+
+`replace-jars.py` can equally swap the Glue client jar (after building it by
+hand with `mvn -pl glue package`), without rebuilding Spark.
 
 ## Building Spark
+
+Only needed for a new Spark version; see above for Iceberg upgrades.
 
 1. First, you need to build the Glue Data Catalog client
    [here](https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore).

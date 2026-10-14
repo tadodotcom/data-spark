@@ -49,10 +49,13 @@ do
 
   major_version=$(echo $version | cut -d. -f1 -f2)
 
+  # Both glue/ and iceberg/; see pom.xml.
   mvn clean package \
        -Dspark.full_version=$version \
        -Dspark.version=$major_version
-  cp target/tado-custom-spark* $SPARK_BASE_PATH/assembly/target/scala-2.13/jars/
+  cp glue/target/tado-custom-spark-glue.jar \
+     iceberg/target/tado-custom-spark-iceberg.jar \
+     $SPARK_BASE_PATH/assembly/target/scala-2.13/jars/
 
   cd $SPARK_BASE_PATH/python
 

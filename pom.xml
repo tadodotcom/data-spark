@@ -24,92 +24,96 @@ under the License.
 	<groupId>com.tado.custom-spark</groupId>
 	<artifactId>tado-custom-spark</artifactId>
 	<version>2024.01.31</version>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 
 	<name>tado Custom Spark Depencencies</name>
+
+	<!-- Two jars, both copied into pyspark's jars/ directory:
+
+	     - glue: the Glue Data Catalog Hive client. Its artifacts aren't
+	       published anywhere, they come from building
+	       aws-glue-data-catalog-client-for-apache-hive-metastore locally (see
+	       README), so this is only built by hand alongside Spark itself.
+	     - iceberg: Iceberg's Spark runtime and AWS bundle, all from Maven
+	       Central. Built (and swapped into the previous release) by CI on
+	       every Iceberg bump, see .github/workflows/build-and-release.yml. -->
+	<modules>
+		<module>glue</module>
+		<module>iceberg</module>
+	</modules>
 
 	<properties>
 		<spark.full_version>4.1.1</spark.full_version>
 		<spark.version>4.1</spark.version>
 		<scala.binary.version>2.13</scala.binary.version>
-		<iceberg.version>1.11.0</iceberg.version>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>com.amazonaws.glue</groupId>
-			<artifactId>aws-glue-datacatalog-spark-client</artifactId>
-			<version>3.4.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.httpcomponents</groupId>
-					<artifactId>httpclient</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.google.guava</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.iceberg</groupId>
-			<artifactId>iceberg-spark-runtime-${spark.version}_${scala.binary.version}</artifactId>
-			<version>${iceberg.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.iceberg</groupId>
-			<artifactId>iceberg-aws-bundle</artifactId>
-			<version>${iceberg.version}</version>
-		</dependency>
-	</dependencies>
 
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.6.0</version>
-				<executions>
-					<!-- Run shade goal on package phase -->
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<!-- Relocating software.amazon.awssdk (below) moves classes like
-							     software.amazon.awssdk.http.apache.ApacheSdkHttpService, which
-							     ServiceLoader-based SPI files under META-INF/services name and
-							     reference explicitly. Without ServicesResourceTransformer, shade
-							     only rewrites classes, leaving the SPI file's name and its listed
-							     implementation both pointing at the old, now-nonexistent package. -->
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-							</transformers>
-							<relocations>
-								<relocation>
-									<pattern>com.fasterxml.jackson</pattern>
-									<shadedPattern>com.tado.data.fasterxml.jackson</shadedPattern>
-								</relocation>
-								<relocation>
-									<pattern>com.amazonaws</pattern>
-									<shadedPattern>com.tado.data.amazonaws</shadedPattern>
-									<excludes>
-										<exclude>com.amazonaws.glue.**</exclude>
-									</excludes>
-								</relocation>
-								<relocation>
-									<pattern>software.amazon.awssdk</pattern>
-									<shadedPattern>com.tado.data.awssdk</shadedPattern>
-								</relocation>
-							</relocations>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>3.6.0</version>
+					<executions>
+						<!-- Run shade goal on package phase -->
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+							<configuration>
+								<createDependencyReducedPom>false</createDependencyReducedPom>
+								<!-- Relocating software.amazon.awssdk (below) moves classes like
+								     software.amazon.awssdk.http.apache.ApacheSdkHttpService, which
+								     ServiceLoader-based SPI files under META-INF/services name and
+								     reference explicitly. Without ServicesResourceTransformer, shade
+								     only rewrites classes, leaving the SPI file's name and its listed
+								     implementation both pointing at the old, now-nonexistent package. -->
+								<transformers>
+									<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+								</transformers>
+								<!-- The Glue client (via AWS SDK v1) and iceberg-aws-bundle both
+								     bundle commons-codec and commons-logging, unrelocated and at
+								     different versions, and Spark already ships commons-codec 1.19.0
+								     and jcl-over-slf4j (the commons-logging API). Leave them to Spark
+								     so each exists on the classpath exactly once. -->
+								<filters>
+									<filter>
+										<artifact>*:*</artifact>
+										<excludes>
+											<exclude>org/apache/commons/codec/**</exclude>
+											<exclude>org/apache/commons/logging/**</exclude>
+										</excludes>
+									</filter>
+								</filters>
+								<!-- Shared by both jars, so every class is relocated exactly as it
+								     was when both lived in a single jar. -->
+								<relocations>
+									<relocation>
+										<pattern>com.fasterxml.jackson</pattern>
+										<shadedPattern>com.tado.data.fasterxml.jackson</shadedPattern>
+									</relocation>
+									<relocation>
+										<pattern>com.amazonaws</pattern>
+										<shadedPattern>com.tado.data.amazonaws</shadedPattern>
+										<excludes>
+											<exclude>com.amazonaws.glue.**</exclude>
+										</excludes>
+									</relocation>
+									<relocation>
+										<pattern>software.amazon.awssdk</pattern>
+										<shadedPattern>com.tado.data.awssdk</shadedPattern>
+									</relocation>
+								</relocations>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 </project>

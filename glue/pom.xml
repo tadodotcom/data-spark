@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.tado.custom-spark</groupId>
+		<artifactId>tado-custom-spark</artifactId>
+		<version>2024.01.31</version>
+	</parent>
+
+	<artifactId>tado-custom-spark-glue</artifactId>
+	<packaging>jar</packaging>
+
+	<name>tado Custom Spark: Glue Data Catalog client</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.amazonaws.glue</groupId>
+			<artifactId>aws-glue-datacatalog-spark-client</artifactId>
+			<version>3.4.0-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.guava</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<!-- No version in the file name: replace-jars.py swaps the jar in the
+		     pyspark sdist in place. The version is in the jar's manifest. -->
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
