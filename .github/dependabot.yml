@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Only Iceberg (iceberg/pom.xml): a merged bump is built and released
+  # automatically by .github/workflows/build-and-release.yml. The Glue client
+  # and Spark itself need a manual rebuild, see README.
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-name: "org.apache.iceberg:*"
+    groups:
+      iceberg:
+        patterns:
+          - "org.apache.iceberg:*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

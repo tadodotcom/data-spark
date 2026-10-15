@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.tado.custom-spark</groupId>
+		<artifactId>tado-custom-spark</artifactId>
+		<version>2024.01.31</version>
+	</parent>
+
+	<artifactId>tado-custom-spark-iceberg</artifactId>
+	<packaging>jar</packaging>
+
+	<name>tado Custom Spark: Iceberg</name>
+
+	<properties>
+		<iceberg.version>1.12.0</iceberg.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.iceberg</groupId>
+			<artifactId>iceberg-spark-runtime-${spark.version}_${scala.binary.version}</artifactId>
+			<version>${iceberg.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.iceberg</groupId>
+			<artifactId>iceberg-aws-bundle</artifactId>
+			<version>${iceberg.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<!-- No version in the file name: replace-jars.py swaps the jar in the
+		     pyspark sdist in place. The version is in the jar's manifest. -->
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
